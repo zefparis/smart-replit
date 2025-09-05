@@ -1,10 +1,12 @@
-import express, { type Express } from "express";
+import * as express from "express";
+import { type Express } from "express";
 import fs from "fs";
 import path from "path";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
+import { getClientTemplatePath, getBuildPath } from "./utils/path-resolver";
 
 const viteLogger = createLogger();
 
@@ -45,12 +47,7 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "..",
-        "client",
-        "index.html",
-      );
+      const clientTemplate = getClientTemplatePath();
 
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
@@ -68,13 +65,7 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
-
-  if (!fs.existsSync(distPath)) {
-    throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
-    );
-  }
+  const distPath = getBuildPath();
 
   app.use(express.static(distPath));
 

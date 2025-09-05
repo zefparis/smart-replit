@@ -5,14 +5,15 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
-    "build": "npm run build:client && npm run build:server",
+    "build": "npm run build:client && npm run build:server && npm run copy:assets",
     "build:client": "vite build",
-    "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/server/index.js",
+    "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/server/index.js --copy-dir=server/utils:dist/server/utils",
     "start": "cross-env NODE_ENV=production node dist/server/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "railway:build": "npm run build",
-    "railway:start": "npm start"
+    "railway:start": "npm start",
+    "copy:assets": "node scripts/copy-assets.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

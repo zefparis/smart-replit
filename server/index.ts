@@ -1,7 +1,9 @@
 // server/index.ts
-import express, { Request, Response, NextFunction } from "express";
+const express = require("express");
+import { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { validateRequiredEnvVars, logEnvStatus } from "./utils/env-validator";
 
 const app = express();
 
@@ -29,6 +31,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  try {
+    // Validate environment variables
+    validateRequiredEnvVars();
+    logEnvStatus();
+  } catch (error) {
+    log(`Environment validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    process.exit(1);
+  }
+
   // --- Routing setup (doit retourner un http.Server OU app, cf. plus bas)
   const serverOrApp = await registerRoutes(app);
 
