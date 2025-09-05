@@ -1,71 +1,59 @@
-import express, { type Request, Response, NextFunction } from "express";
+// server/index.ts
+import express, { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// --- Middleware de base
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// --- Logger API (compact, log/monitoring prod-ready)
 app.use((req, res, next) => {
   const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
+  let capturedBody: any;
+  const originalJson = res.json;
+  res.json = function (body, ...args) {
+    capturedBody = body;
+    return originalJson.call(this, body, ...args);
   };
-
   res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
+    if (req.path.startsWith("/api")) {
+      let msg = `${req.method} ${req.path} ${res.statusCode} in ${Date.now() - start}ms`;
+      if (capturedBody) msg += ` :: ${JSON.stringify(capturedBody)}`;
+      log(msg.length > 120 ? msg.slice(0, 119) + "…" : msg);
     }
   });
-
   next();
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  // --- Routing setup (doit retourner un http.Server OU app, cf. plus bas)
+  const serverOrApp = await registerRoutes(app);
 
+  // --- Error handler global (évite crash app si erreur 500+)
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
+    const status = err.status || 500;
+    const msg = err.message || "Internal Server Error";
+    log(`ERROR ${status} :: ${msg}`);
+    if (!res.headersSent) res.status(status).json({ message: msg });
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // --- Dev: Vite (SSR), Prod: Static
   if (app.get("env") === "development") {
-    await setupVite(app, server);
+    await setupVite(app, serverOrApp);
   } else {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  // --- Cloud port auto, 0.0.0.0 obligatoire, fallback 5000
+  const port = parseInt(process.env.PORT || "5000", 10);
+
+  // --- Si registerRoutes renvoie un http.Server, .listen() dessus. Sinon fallback app.listen().
+  const listener = (typeof serverOrApp.listen === "function" ? serverOrApp : app) as typeof app;
+  listener.listen(port, "0.0.0.0", () => log(`🚀 Serving on http://0.0.0.0:${port}`));
 })();
+
+// Optionnel : healthcheck pour Railway/Heroku
+app.get("/healthz", (_req, res) => res.status(200).send("OK"));
