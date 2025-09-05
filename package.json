@@ -93,9 +93,7 @@
     "wouter": "^3.3.5",
     "ws": "^8.18.0",
     "zod": "^3.24.2",
-    "zod-validation-error": "^3.4.0",
-    "nanoid": "^5.0.9",
-    "vite": "^5.4.19"
+    "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
@@ -117,7 +115,9 @@
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.1",
     "typescript": "5.6.3",
-    "cross-env": "^7.0.3"
+    "cross-env": "^7.0.3",
+    "vite": "^5.4.19",
+    "nanoid": "^5.0.9"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
