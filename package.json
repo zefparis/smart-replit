@@ -8,7 +8,7 @@
     "build": "npm run build:client && npm run build:server && npm run copy:assets",
     "build:verbose": "npm run build:client --verbose && npm run build:server --verbose && npm run copy:assets",
     "build:client": "vite build",
-    "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/server/index.js --external:vite --external:nanoid --external:../vite.config.js",
+    "build:server": "esbuild server/index.ts --platform=node --format=esm --packages=external --bundle --outfile=dist/server/index.js --external:express --external:pg --external:ws --external:drizzle-orm --external:ethers --external:cron --external:passport --external:express-session --external:memorystore --external:connect-pg-simple --external:openid-client --external:bcrypt --external:passport-local --external:framer-motion --external:react --external:react-dom --external:next-themes --external:tailwindcss --external:@radix-ui/* --external:@tanstack/react-query --external:@hookform/resolvers --external:zod --external:clsx --external:tailwind-merge --external:cmdk --external:input-otp --external:vaul --external:lucide-react --external:react-icons --external:react-hook-form --external:react-resizable-panels --external:recharts --external:wouter --external:react-day-picker --external:web3modal --external:@walletconnect/* --external:@metamask/detect-provider --external:@neondatabase/serverless",
     "start": "NODE_ENV=production node dist/server/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push",
