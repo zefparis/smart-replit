@@ -1,11 +1,22 @@
 // server/index.ts
-const express = require("express");
-import { Request, Response, NextFunction } from "express";
+import express from "express";
+import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
 import { validateRequiredEnvVars, logEnvStatus } from "./utils/env-validator";
 
 const app = express();
+
+// Lightweight logger (kept local to avoid importing dev-only vite module in prod)
+export function log(message: string, source = "express") {
+  const formattedTime = new Date().toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+  // eslint-disable-next-line no-console
+  console.log(`${formattedTime} [${source}] ${message}`);
+}
 
 // --- Middleware de base
 app.use(express.json());
@@ -52,9 +63,12 @@ app.use((req, res, next) => {
   });
 
   // --- Dev: Vite (SSR), Prod: Static
-  if (app.get("env") === "development") {
+  const isDev = process.env.NODE_ENV !== "production";
+  if (isDev) {
+    const { setupVite } = await import("./vite");
     await setupVite(app, serverOrApp);
   } else {
+    const { serveStatic } = await import("./static");
     serveStatic(app);
   }
 
