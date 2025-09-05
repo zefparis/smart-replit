@@ -1,0 +1,11 @@
+{
+  "access_token": null,
+  "refresh_token": null,
+  "expires_in": null,
+  "token_type": "bearer",
+  "scope": null,
+  "obtained_at": null,
+  "expires_at": null,
+  "status": "placeholder",
+  "note": "Token placeholder - authentification requise"
+}
